@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PUDU Academy - Robot Trolley &amp; Stock Placement Optimizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <!-- Three.js CDN for 3D rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+      </div>
+      <h1>PUDU Academy Stock Placement Optimizer</h1>
+    </div>
+  </header>
+
+  <main class="dashboard-layout">
+    <!-- Left Sidebar: Controls & Inputs -->
+    <aside class="sidebar-panel">
+      <!-- Section 1: PUDU Rack Specs (Default 800 x 800 x 1300mm) -->
+      <section class="card">
+        <div class="card-header flex-between">
+          <h2>PUDU Trolley &amp; Robot Settings</h2>
+          <button id="btn-dim-guide" class="btn btn-xs btn-outline" title="Show rack dimension reference guide (A-G)">Dimension Guide</button>
+        </div>
+        <div class="card-body">
+          <!-- Collapsible Dimension Guide Reference Image -->
+          <div id="dim-guide-panel" class="dim-guide-panel" style="display: none;">
+            <div class="dim-guide-img-wrap">
+              <img src="pudu_rack_dimensions_guide.png" alt="PUDU Rack Dimensions A-G Reference Guide" id="dim-guide-img" class="dim-guide-img">
+            </div>
+            <p class="dim-guide-caption">
+              <strong>A</strong> = Rack Length &nbsp;|&nbsp;
+              <strong>B</strong> = Rack Width &nbsp;|&nbsp;
+              <strong>C/D</strong> = Leg Width &nbsp;|&nbsp;
+              <strong>E</strong> = Penetration Leg Clearance &nbsp;|&nbsp;
+              <strong>F</strong> = Parallel Leg Clearance &nbsp;|&nbsp;
+              <strong>G</strong> = Ground Clearance Height
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="trolley-preset">PUDU Preset</label>
+            <select id="trolley-preset" class="form-control">
+              <option value="CUSTOM" selected>PUDU Standard Trolley (800 x 800 x 1300mm | 600kg)</option>
+              <option value="T600">PUDU T600 — With Mast (900 x 660 x 1300mm | 600kg)</option>
+              <option value="T300">PUDU T300 — With Mast (1200 x 1200 x 1300mm | 300kg)</option>
+              <option value="T600_UNDERRIDE">PUDU T600 Underride — No Mast (900 x 660 x 1500mm | 600kg)</option>
+            </select>
+          </div>
+
+          <div class="dim-grid mt-2">
+            <div class="form-group">
+              <label for="trolley-l" title="Rack Length (A): 600-1200mm">Length A (mm)</label>
+              <input type="number" id="trolley-l" value="800" min="600" max="1200" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="trolley-w" title="Rack Width (B): 300-1000mm">Width B (mm)</label>
+              <input type="number" id="trolley-w" value="800" min="300" max="1000" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="trolley-h" id="label-h" title="Max 1300mm for Mast, Max 1500mm for Underride">Height (mm)</label>
+              <input type="number" id="trolley-h" value="1300" min="400" max="1500" class="form-control">
+            </div>
+          </div>
+
+          <div class="dim-grid mt-2">
+            <div class="form-group">
+              <label for="trolley-g" title="Rack Bottom Height (G): 260-295mm">Clearance G</label>
+              <input type="number" id="trolley-g" value="275" min="260" max="295" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="trolley-cd" title="Rack Leg Width (C, D): 10-50mm">Leg C/D (mm)</label>
+              <input type="number" id="trolley-cd" value="40" min="10" max="50" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="trolley-weight-limit">Max Payload (kg)</label>
+              <input type="number" id="trolley-weight-limit" value="600" min="10" max="600" class="form-control">
+            </div>
+          </div>
+
+          <div class="dim-grid-2 mt-2">
+            <div class="form-group">
+              <label for="trolley-e" title="Penetration Side Leg Clearance (E): 620-1200mm">Penetration Leg E (mm)</label>
+              <input type="number" id="trolley-e" value="720" min="620" max="1200" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="trolley-f" title="Parallel Side Leg Clearance (F): 300-1000mm">Parallel Leg F (mm)</label>
+              <input type="number" id="trolley-f" value="720" min="300" max="1000" class="form-control">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Cargo Manifest Input -->
+      <section class="card mt-3">
+        <div class="card-header flex-between">
+          <h2>Product Manifest</h2>
+          <div class="manifest-header-actions">
+            <button id="btn-smart-fit" class="btn btn-xs btn-outline" title="Optimize trolley size for item dimensions">Auto-Fit</button>
+            <button id="btn-max-mix" class="btn btn-xs btn-secondary" title="Max fill trolley with optimal mix of listed products">Max Fill Mix</button>
+            <button id="btn-calculate" class="btn btn-xs btn-primary">Calculate</button>
+            <span class="badge-count" id="badge-manifest-count">0 Lines</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <form id="form-product-add" class="product-input-form">
+            <div class="form-group">
+              <label>Product Name</label>
+              <input type="text" id="p-name" value="Product 1" required class="form-control">
+            </div>
+            <div class="dim-grid-4 mt-2">
+              <div class="form-group">
+                <label>L (mm)</label>
+                <input type="number" id="p-l" value="600" min="50" max="1200" required class="form-control">
+              </div>
+              <div class="form-group">
+                <label>W (mm)</label>
+                <input type="number" id="p-w" value="600" min="50" max="1200" required class="form-control">
+              </div>
+              <div class="form-group">
+                <label>H (mm)</label>
+                <input type="number" id="p-h" value="300" min="50" max="1300" required class="form-control">
+              </div>
+              <div class="form-group">
+                <label>Wt (kg)</label>
+                <input type="number" id="p-wt" value="15" step="0.1" min="0.1" required class="form-control">
+              </div>
+            </div>
+
+            <div class="dim-grid-2 mt-2">
+              <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" id="p-qty" value="4" min="1" max="500" required class="form-control">
+              </div>
+              <div class="form-group align-end">
+                <label>&nbsp;</label>
+                <button type="button" id="btn-calc-max-qty" class="btn btn-outline btn-full" title="Calculate maximum units that can fit">Find Max Qty</button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-secondary btn-full mt-3">+ Add to Manifest</button>
+          </form>
+
+          <!-- Table of Added Products -->
+          <div class="product-table-wrapper mt-3">
+            <table class="data-table" id="table-products">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Dims (mm)</th>
+                  <th>Wt</th>
+                  <th>Qty</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-products">
+                <tr><td colspan="5" class="text-center text-muted">Manifest is empty. Add parameters above.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Right Workspace: Analytics & Dual 2D / 3D Visualization -->
+    <div class="main-viewport">
+      <!-- Top Metrics Dashboard -->
+      <div class="metrics-bar card-grid-3">
+        <div class="metric-card">
+          <span class="metric-label">Volume Utilization</span>
+          <span class="metric-value" id="metric-vol-pct">0.0%</span>
+          <div class="progress-bar"><div class="progress-fill" id="fill-vol" style="width: 0%"></div></div>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Weight Capacity</span>
+          <span class="metric-value" id="metric-wt-stat">0 / 600 kg</span>
+          <div class="progress-bar"><div class="progress-fill" id="fill-wt" style="width: 0%"></div></div>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Items Placed</span>
+          <span class="metric-value" id="metric-count">0 / 0</span>
+          <span class="metric-sub" id="metric-unpacked">0 unpacked</span>
+        </div>
+      </div>
+
+      <!-- Main Visual Viewports -->
+      <section class="card visualizer-card mt-3">
+        <div class="card-header visualizer-header">
+          <div class="view-tabs">
+            <button class="tab-btn active" data-tab="3d">3D View (Trolley &amp; Chassis)</button>
+            <button class="tab-btn" data-tab="top">2D Top View (Layer Slice Map)</button>
+            <button class="tab-btn" data-tab="side">2D Side View (Chassis Below Volume)</button>
+            <button class="tab-btn" data-tab="manifest">Loading Placement Guide</button>
+          </div>
+          <div class="robot-facing-badge">
+            ▲ Robot Facing Direction (Front)
+          </div>
+        </div>
+
+        <div class="card-body view-container">
+          <!-- 3D Viewport -->
+          <div id="view-3d" class="tab-content active">
+            <div id="canvas-3d-container"></div>
+            
+            <!-- Top-Right Robot Facing Direction Compass Widget -->
+            <div class="robot-orientation-widget" id="robot-orientation-widget">
+              <div class="widget-header">
+                <span id="compass-model-name">PUDU T600</span>
+                <span class="front-badge">FRONT ▲</span>
+              </div>
+              <div class="compass-dial">
+                <div class="compass-robot-icon" id="robot-compass-icon">
+                  <div class="robot-body-shape" id="robot-body-shape"></div>
+                  <div class="robot-front-arrow">▲</div>
+                </div>
+              </div>
+              <div class="compass-footer">Live View Rotation</div>
+            </div>
+
+            <div class="viewport-controls-overlay">
+              <span>Mouse Drag: Rotate | Scroll: Zoom</span>
+              <button id="btn-reset-cam" class="btn btn-xs btn-outline">Reset Camera</button>
+            </div>
+          </div>
+
+          <!-- 2D Top View Viewport -->
+          <div id="view-top" class="tab-content">
+            <div class="layer-slider-bar">
+              <label for="slice-slider">Slice Height Layer: <span id="slice-val">0 - 1300 mm</span></label>
+              <input type="range" id="slice-slider" min="0" max="1300" step="50" value="1300">
+            </div>
+            <div class="canvas-2d-wrapper">
+              <canvas id="canvas-top-2d" width="700" height="600"></canvas>
+            </div>
+          </div>
+
+          <!-- 2D Side View Viewport -->
+          <div id="view-side" class="tab-content">
+            <div class="side-info-bar">
+              <span>Elevation Profile (Cargo Volume Z: 0-1300mm | PUDU Chassis Silhouette Z < 0)</span>
+            </div>
+            <div class="canvas-2d-wrapper">
+              <canvas id="canvas-side-2d" width="700" height="600"></canvas>
+            </div>
+          </div>
+
+          <!-- Loading Manifest Viewport -->
+          <div id="view-manifest" class="tab-content">
+            <div class="table-responsive">
+              <table class="data-table manifest-table">
+                <thead>
+                  <tr>
+                    <th>Step #</th>
+                    <th>Product Name / SKU</th>
+                    <th>Placement Pos (X, Y, Z mm)</th>
+                    <th>Packed Dims (L, W, H mm)</th>
+                    <th>Weight</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-manifest">
+                  <tr><td colspan="6" class="text-center text-muted">Add product parameters to calculate arrangement.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Confirmation Modal for Smart Dimension Optimization -->
+  <div id="smart-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Smart Dimension Suggestion</h3>
+        <button id="btn-close-modal" class="btn-icon-del">✕</button>
+      </div>
+      <div class="modal-body" id="smart-modal-body">
+        <!-- Filled dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancel-smart" class="btn btn-secondary">Keep Current Dimensions</button>
+        <button id="btn-apply-smart" class="btn btn-primary">Apply Suggested Dimensions</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
