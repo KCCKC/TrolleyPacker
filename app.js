@@ -55,6 +55,51 @@ const PALETTE = [
   '#06b6d4', '#eab308', '#6366f1', '#f43f5e', '#84cc16'
 ];
 
+const PUDU_PARAM_BOUNDS = {
+  length:     { min: 600, max: 1200, recMin: 700, recMax: 1000, name: 'Length A' },
+  width:      { min: 300, max: 1000, recMin: 500, recMax: 800,  name: 'Width B' },
+  legCD:      { min: 10,  max: 50,   recMin: 30,  recMax: 50,   name: 'Leg C/D' },
+  clearanceE: { min: 620, max: 1200, recMin: 620, recMax: 940,  name: 'Penetration Leg E' },
+  clearanceF: { min: 300, max: 1000, recMin: 400, recMax: 740,  name: 'Parallel Leg F' },
+  clearanceG: { min: 260, max: 295,  recMin: 275, recMax: 280,  name: 'Ground Clearance G' }
+};
+
+function validatePuduParameters() {
+  const t = state.trolley;
+  const warnings = [];
+
+  // Check absolute & recommended ranges
+  if (t.length < 600 || t.length > 1200) warnings.push(`Length A (${t.length}mm) out of range [600-1200mm]`);
+  else if (t.length < 700 || t.length > 1000) warnings.push(`Length A (${t.length}mm) outside recommended [700-1000mm]`);
+
+  if (t.width < 300 || t.width > 1000) warnings.push(`Width B (${t.width}mm) out of range [300-1000mm]`);
+  else if (t.width < 500 || t.width > 800) warnings.push(`Width B (${t.width}mm) outside recommended [500-800mm]`);
+
+  if (t.legCD < 10 || t.legCD > 50) warnings.push(`Leg C/D (${t.legCD}mm) out of range [10-50mm]`);
+  else if (t.legCD < 30 || t.legCD > 50) warnings.push(`Leg C/D (${t.legCD}mm) outside recommended [30-50mm]`);
+
+  if (t.clearanceE < 620 || t.clearanceE > 1200) warnings.push(`Clearance E (${t.clearanceE}mm) out of range [620-1200mm]`);
+  else if (t.clearanceE < 620 || t.clearanceE > 940) warnings.push(`Clearance E (${t.clearanceE}mm) outside recommended [620-940mm]`);
+
+  if (t.clearanceF < 300 || t.clearanceF > 1000) warnings.push(`Clearance F (${t.clearanceF}mm) out of range [300-1000mm]`);
+  else if (t.clearanceF < 400 || t.clearanceF > 740) warnings.push(`Clearance F (${t.clearanceF}mm) outside recommended [400-740mm]`);
+
+  if (t.clearanceG < 260 || t.clearanceG > 295) warnings.push(`Clearance G (${t.clearanceG}mm) out of range [260-295mm]`);
+
+  const banner = document.getElementById('pudu-validation-banner');
+  if (banner) {
+    if (warnings.length > 0) {
+      banner.className = 'validation-banner warning';
+      banner.style.display = 'block';
+      banner.innerHTML = `⚠️ <strong>PUDU Spec Warning:</strong><br>` + warnings.slice(0, 3).join('<br>');
+    } else {
+      banner.className = 'validation-banner success';
+      banner.style.display = 'block';
+      banner.innerHTML = `✅ <strong>PUDU Spec Validated:</strong> All parameters A-G within recommended specs.`;
+    }
+  }
+}
+
 function getSkuColor(skuName, index) {
   return PALETTE[index % PALETTE.length];
 }
@@ -75,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initUI();
   initThreeJS();
   renderProductTable();
+  validatePuduParameters();
   calculatePacking();
 });
 
@@ -138,6 +184,7 @@ function initUI() {
       document.getElementById('slice-slider').max = p.height;
       
       // Dynamically trigger model load and 3D scene re-render
+      validatePuduParameters();
       loadPuduModel(state.trolley.chassisType, () => {
         calculatePacking();
       });
@@ -147,23 +194,26 @@ function initUI() {
   ['trolley-l', 'trolley-w', 'trolley-h', 'trolley-g', 'trolley-cd', 'trolley-e', 'trolley-f', 'trolley-weight-limit'].forEach(id => {
     const elem = document.getElementById(id);
     if (elem) {
-      elem.addEventListener('change', () => {
+      const handler = () => {
         document.getElementById('trolley-preset').value = 'CUSTOM';
         const isUnderride = state.trolley.chassisType === 'underride';
         const maxH = isUnderride ? 1500 : 1300;
 
-        state.trolley.length = Math.min(parseInt(document.getElementById('trolley-l').value) || 800, MAX_LIMITS.length);
-        state.trolley.width = Math.min(parseInt(document.getElementById('trolley-w').value) || 800, MAX_LIMITS.width);
+        state.trolley.length = parseInt(document.getElementById('trolley-l').value) || 800;
+        state.trolley.width = parseInt(document.getElementById('trolley-w').value) || 800;
         state.trolley.height = Math.min(parseInt(document.getElementById('trolley-h').value) || 1300, maxH);
-        state.trolley.clearanceG = Math.min(parseInt(document.getElementById('trolley-g').value) || 275, 295);
-        state.trolley.legCD = Math.min(parseInt(document.getElementById('trolley-cd').value) || 40, 50);
-        state.trolley.clearanceE = Math.min(parseInt(document.getElementById('trolley-e').value) || 720, 1200);
-        state.trolley.clearanceF = Math.min(parseInt(document.getElementById('trolley-f').value) || 720, 1000);
-        state.trolley.maxWeight = Math.min(parseFloat(document.getElementById('trolley-weight-limit').value) || 600, MAX_LIMITS.maxWeight);
+        state.trolley.clearanceG = parseInt(document.getElementById('trolley-g').value) || 275;
+        state.trolley.legCD = parseInt(document.getElementById('trolley-cd').value) || 40;
+        state.trolley.clearanceE = parseInt(document.getElementById('trolley-e').value) || 720;
+        state.trolley.clearanceF = parseInt(document.getElementById('trolley-f').value) || 720;
+        state.trolley.maxWeight = parseFloat(document.getElementById('trolley-weight-limit').value) || 600;
 
         document.getElementById('slice-slider').max = state.trolley.height;
+        validatePuduParameters();
         calculatePacking();
-      });
+      };
+      elem.addEventListener('change', handler);
+      elem.addEventListener('input', handler);
     }
   });
 

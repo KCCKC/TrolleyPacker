@@ -64,44 +64,46 @@
 
           <div class="dim-grid mt-2">
             <div class="form-group">
-              <label for="trolley-l" title="Rack Length (A): 600-1200mm">Length A (mm)</label>
-              <input type="number" id="trolley-l" value="800" min="600" max="1200" class="form-control">
+              <label for="trolley-l" title="Rack Length (A): Min 600mm - Max 1200mm (Recommended: 700-1000mm)">Length A (mm)</label>
+              <input type="number" id="trolley-l" value="800" min="600" max="1200" class="form-control" title="Allowed: 600-1200mm (Recommended: 700-1000mm)">
             </div>
             <div class="form-group">
-              <label for="trolley-w" title="Rack Width (B): 300-1000mm">Width B (mm)</label>
-              <input type="number" id="trolley-w" value="800" min="300" max="1000" class="form-control">
+              <label for="trolley-w" title="Rack Width (B): Min 300mm - Max 1000mm (Recommended: 500-800mm)">Width B (mm)</label>
+              <input type="number" id="trolley-w" value="800" min="300" max="1000" class="form-control" title="Allowed: 300-1000mm (Recommended: 500-800mm)">
             </div>
             <div class="form-group">
               <label for="trolley-h" id="label-h" title="Max 1300mm for Mast, Max 1500mm for Underride">Height (mm)</label>
-              <input type="number" id="trolley-h" value="1300" min="400" max="1500" class="form-control">
+              <input type="number" id="trolley-h" value="1300" min="400" max="1500" class="form-control" title="Allowed: 400-1500mm">
             </div>
           </div>
 
           <div class="dim-grid mt-2">
             <div class="form-group">
-              <label for="trolley-g" title="Rack Bottom Height (G): 260-295mm">Clearance G</label>
-              <input type="number" id="trolley-g" value="275" min="260" max="295" class="form-control">
+              <label for="trolley-g" title="Rack Bottom Height (G): 260-280mm (T300), 275-295mm (T600), 275-280mm (Shared)">Clearance G (mm)</label>
+              <input type="number" id="trolley-g" value="275" min="260" max="295" class="form-control" title="260-280mm (T300), 275-295mm (T600), 275-280mm (Shared)">
             </div>
             <div class="form-group">
-              <label for="trolley-cd" title="Rack Leg Width (C, D): 10-50mm">Leg C/D (mm)</label>
-              <input type="number" id="trolley-cd" value="40" min="10" max="50" class="form-control">
+              <label for="trolley-cd" title="Rack Leg Width (C, D): Min 10mm - Max 50mm (Recommended: 30-50mm)">Leg C/D (mm)</label>
+              <input type="number" id="trolley-cd" value="40" min="10" max="50" class="form-control" title="Allowed: 10-50mm (Recommended: 30-50mm)">
             </div>
             <div class="form-group">
-              <label for="trolley-weight-limit">Max Payload (kg)</label>
+              <label for="trolley-weight-limit" title="Max Payload: Up to 600kg">Max Payload (kg)</label>
               <input type="number" id="trolley-weight-limit" value="600" min="10" max="600" class="form-control">
             </div>
           </div>
 
           <div class="dim-grid-2 mt-2">
             <div class="form-group">
-              <label for="trolley-e" title="Penetration Side Leg Clearance (E): 620-1200mm">Penetration Leg E (mm)</label>
-              <input type="number" id="trolley-e" value="720" min="620" max="1200" class="form-control">
+              <label for="trolley-e" title="Penetration Side Leg Clearance (E): Min 620mm - Max 1200mm (Recommended: 620-940mm)">Penetration Leg E (mm)</label>
+              <input type="number" id="trolley-e" value="720" min="620" max="1200" class="form-control" title="Allowed: 620-1200mm (Recommended: 620-940mm)">
             </div>
             <div class="form-group">
-              <label for="trolley-f" title="Parallel Side Leg Clearance (F): 300-1000mm">Parallel Leg F (mm)</label>
-              <input type="number" id="trolley-f" value="720" min="300" max="1000" class="form-control">
+              <label for="trolley-f" title="Parallel Side Leg Clearance (F): Min 300mm - Max 1000mm (Recommended: 400-740mm)">Parallel Leg F (mm)</label>
+              <input type="number" id="trolley-f" value="720" min="300" max="1000" class="form-control" title="Allowed: 300-1000mm (Recommended: 400-740mm)">
             </div>
           </div>
+          <!-- Live Validation Status Warning Banner -->
+          <div id="pudu-validation-banner" class="validation-banner mt-2" style="display: none;"></div>
         </div>
       </section>
 
