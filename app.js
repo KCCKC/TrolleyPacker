@@ -672,14 +672,16 @@ function loadPuduModel(chassisType, onLoaded) {
     loader.load(
       url,
       (gltf) => {
-        // Fix PBR metallic factor (pygltflib metallicFactor: 1.0 makes meshes pitch black without env map)
+        // Enhance PBR materials while preserving original texture maps and color tones
         gltf.scene.traverse(child => {
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
             if (child.material) {
-              child.material.metalness = 0.1;
-              child.material.roughness = 0.5;
+              // Clamp metallic factor so PBR materials illuminate nicely without environment map
+              if (child.material.metalness >= 0.8) {
+                child.material.metalness = 0.35;
+              }
               child.material.side = THREE.DoubleSide;
               child.material.needsUpdate = true;
             }
@@ -737,16 +739,24 @@ function initThreeJS() {
     controls.maxDistance = 12000;
   }
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
   scene.add(ambientLight);
+
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x475569, 0.4);
+  hemiLight.position.set(0, 2000, 0);
+  scene.add(hemiLight);
 
   const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
   dirLight1.position.set(1500, 2500, 1500);
   scene.add(dirLight1);
 
-  const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+  const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.45);
   dirLight2.position.set(-1500, 1500, -1500);
   scene.add(dirLight2);
+
+  const dirLight3 = new THREE.DirectionalLight(0xffffff, 0.35);
+  dirLight3.position.set(0, -1000, 1500);
+  scene.add(dirLight3);
 
   itemsGroup = new THREE.Group();
   scene.add(itemsGroup);
