@@ -458,8 +458,10 @@ body {
 .visualizer-card {
   display: flex;
   flex-direction: column;
-  height: 380px;
-  min-height: 360px;
+  /* Fill remaining viewport height: total vh minus header(48px) + metrics(90px) + gaps(~60px) */
+  height: calc(100vh - 220px);
+  min-height: 300px;
+  max-height: 520px;
 }
 
 .visualizer-header {
@@ -510,6 +512,7 @@ body {
   overflow: hidden;
   padding: 0;
   display: flex;
+  min-height: 200px;
 }
 
 .tab-content {
@@ -527,6 +530,7 @@ body {
 #canvas-3d-container {
   width: 100%;
   height: 100%;
+  min-height: 200px;
 }
 
 .viewport-controls-overlay {
@@ -671,8 +675,8 @@ body {
   align-items: center;
   justify-content: center;
   background-color: #f1f5f9;
-  padding: 1rem;
-  overflow: auto;
+  padding: 0.5rem;
+  overflow: hidden;
   min-height: 0;
 }
 
@@ -682,9 +686,10 @@ body {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   cursor: default;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain;
 }
 
 .side-info-bar {

@@ -288,12 +288,10 @@ function initUI() {
       state.activeTab = tabId;
 
       if (tabId === '3d') {
-        const container = document.getElementById('canvas-3d-container');
-        if (renderer && camera && container && container.clientWidth > 0) {
-          camera.aspect = container.clientWidth / container.clientHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(container.clientWidth, container.clientHeight);
-        }
+        setTimeout(() => {
+          resizeRenderer();
+          render3DScene();
+        }, 50);
         if (controls) controls.update();
       }
       if (tabId === 'top') render2DTopView();
@@ -667,18 +665,24 @@ function initThreeJS() {
     return;
   }
 
+  // Wait until the container has real pixel dimensions (layout must settle)
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  if (w < 50 || h < 50) {
+    setTimeout(initThreeJS, 200);
+    return;
+  }
+
   container.innerHTML = '';
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf1f5f9);
 
-  const w = container.clientWidth || 700;
-  const h = container.clientHeight || 500;
-
   camera = new THREE.PerspectiveCamera(45, w / h, 1, 30000);
   camera.position.set(1600, 1400, 1600);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(w, h);
   container.appendChild(renderer.domElement);
 
@@ -708,24 +712,14 @@ function initThreeJS() {
   loadPuduModel('mast', () => { render3DScene(); });
   loadPuduModel('underride', () => {});
 
-  // Ensure container layout settles before sizing renderer
+  // Safety re-render after layout fully settles
   setTimeout(() => {
-    if (!container) return;
-    const w = container.clientWidth || 800;
-    const h = container.clientHeight || 600;
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
+    resizeRenderer();
     render3DScene();
-  }, 100);
+  }, 500);
 
   window.addEventListener('resize', () => {
-    if (!container) return;
-    const w = container.clientWidth || 800;
-    const h = container.clientHeight || 600;
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
+    resizeRenderer();
     render3DScene();
   });
 
@@ -737,6 +731,16 @@ function initThreeJS() {
   });
 
   animate();
+}
+
+function resizeRenderer() {
+  const container = document.getElementById('canvas-3d-container');
+  if (!renderer || !camera || !container) return;
+  const w = container.clientWidth || 400;
+  const h = container.clientHeight || 300;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
 }
 
 function updateRobotOrientationCompass() {
@@ -950,7 +954,7 @@ function render3DScene() {
   const G = state.trolley.clearanceG || 275;
 
   const container = document.getElementById('canvas-3d-container');
-  if (renderer && camera && container && container.clientWidth > 0) {
+  if (renderer && camera && container && container.clientWidth > 0 && container.clientHeight > 0) {
     camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(container.clientWidth, container.clientHeight);
