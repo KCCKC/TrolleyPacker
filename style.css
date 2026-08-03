@@ -76,7 +76,6 @@ body {
   color: var(--bg-dark-navy);
   letter-spacing: -0.01em;
 }
-}
 
 /* Dashboard Layout (25% Left Parameters Sidebar | 75% Right 3D Visualizer Workspace) */
 .dashboard-layout {
