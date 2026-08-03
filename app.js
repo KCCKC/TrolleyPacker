@@ -705,11 +705,25 @@ function initThreeJS() {
   loadPuduModel('mast', () => { render3DScene(); });
   loadPuduModel('underride', () => {});
 
+  // Ensure container layout settles before sizing renderer
+  setTimeout(() => {
+    if (!container) return;
+    const w = container.clientWidth || 800;
+    const h = container.clientHeight || 600;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    render3DScene();
+  }, 100);
+
   window.addEventListener('resize', () => {
     if (!container) return;
-    camera.aspect = container.clientWidth / container.clientHeight;
+    const w = container.clientWidth || 800;
+    const h = container.clientHeight || 600;
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setSize(w, h);
+    render3DScene();
   });
 
   document.getElementById('btn-reset-cam').addEventListener('click', () => {
@@ -931,7 +945,17 @@ function render3DScene() {
   const { length: L, width: W, height: H } = state.trolley;
   const G = state.trolley.clearanceG || 275;
 
-  if (controls) controls.target.set(L / 2, G + H / 2, W / 2);
+  const container = document.getElementById('canvas-3d-container');
+  if (renderer && camera && container && container.clientWidth > 0) {
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  }
+
+  if (controls) {
+    controls.target.set(L / 2, G + H / 2, W / 2);
+    controls.update();
+  }
 
   // 1. Draw full chassis + rack + cage structure
   drawPuduChassisAndRack(itemsGroup, L, W, H, state.trolley);
@@ -961,6 +985,10 @@ function render3DScene() {
 
     itemsGroup.add(mesh);
   });
+
+  if (renderer && scene && camera) {
+    renderer.render(scene, camera);
+  }
 }
 
 // -------------------------------------------------------------
