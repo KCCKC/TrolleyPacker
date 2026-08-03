@@ -445,12 +445,12 @@ body {
   transition: width 0.4s ease;
 }
 
-/* Visualizer Section (Right Side 3D Viewport) */
+/* Visualizer Section (Right Side Compact 3D Viewport) */
 .visualizer-card {
   display: flex;
   flex-direction: column;
-  height: 560px;
-  min-height: 480px;
+  height: 280px;
+  min-height: 260px;
 }
 
 .visualizer-header {
