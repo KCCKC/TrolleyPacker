@@ -162,6 +162,30 @@ body {
   text-overflow: ellipsis;
 }
 
+.label-with-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.label-with-badge label {
+  margin-bottom: 0;
+}
+
+.inner-dim-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--pudu-blue);
+  background-color: rgba(0, 82, 204, 0.09);
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 82, 204, 0.18);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
 .form-control {
   background-color: #ffffff;
   border: 1px solid #cbd5e1;

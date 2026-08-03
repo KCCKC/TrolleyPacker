@@ -65,11 +65,17 @@
 
           <div class="dim-grid-2 mt-2">
             <div class="form-group">
-              <label for="trolley-l" title="Rack Length (A): Min 600mm - Max 1200mm (Recommended: 700-1000mm)">Length A (mm)</label>
+              <div class="label-with-badge">
+                <label for="trolley-l" title="Rack Length (A): Min 600mm - Max 1200mm (Recommended: 700-1000mm)">Length A (mm)</label>
+                <span class="inner-dim-badge" id="inner-l-badge">Inner: 720 mm</span>
+              </div>
               <input type="number" id="trolley-l" value="800" min="600" max="1200" class="form-control" title="Allowed: 600-1200mm">
             </div>
             <div class="form-group">
-              <label for="trolley-w" title="Rack Width (B): Min 300mm - Max 1000mm (Recommended: 500-800mm)">Width B (mm)</label>
+              <div class="label-with-badge">
+                <label for="trolley-w" title="Rack Width (B): Min 300mm - Max 1000mm (Recommended: 500-800mm)">Width B (mm)</label>
+                <span class="inner-dim-badge" id="inner-w-badge">Inner: 720 mm</span>
+              </div>
               <input type="number" id="trolley-w" value="800" min="300" max="1000" class="form-control" title="Allowed: 300-1000mm">
             </div>
           </div>

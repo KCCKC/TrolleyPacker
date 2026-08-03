@@ -68,6 +68,20 @@ function validatePuduParameters() {
   const t = state.trolley;
   const warnings = [];
 
+  // Compute inner usable dimensions: A - 2C and B - 2C (Leg C and D share same value)
+  const legCD = t.legCD || 40;
+  const innerL = Math.max(0, t.length - 2 * legCD);
+  const innerW = Math.max(0, t.width - 2 * legCD);
+
+  const badgeL = document.getElementById('inner-l-badge');
+  const badgeW = document.getElementById('inner-w-badge');
+  if (badgeL) badgeL.textContent = `Inner: ${innerL} mm`;
+  if (badgeW) badgeW.textContent = `Inner: ${innerW} mm`;
+
+  if (innerL < 100 || innerW < 100) {
+    warnings.push(`Inner Usable Area (${innerL}×${innerW}mm) is too small! Increase A/B or decrease Leg C/D.`);
+  }
+
   // Check absolute & recommended ranges
   if (t.length < 600 || t.length > 1200) warnings.push(`Length A (${t.length}mm) out of range [600-1200mm]`);
   else if (t.length < 700 || t.length > 1000) warnings.push(`Length A (${t.length}mm) outside recommended [700-1000mm]`);
@@ -95,7 +109,7 @@ function validatePuduParameters() {
     } else {
       banner.className = 'validation-banner success';
       banner.style.display = 'block';
-      banner.innerHTML = `✅ <strong>PUDU Spec Validated:</strong> All parameters A-G within recommended specs.`;
+      banner.innerHTML = `✅ <strong>PUDU Spec Validated:</strong> Usable Inner Area: ${innerL}×${innerW}mm (${(innerL*innerW*t.height/1000000).toFixed(2)}L cargo vol).`;
     }
   }
 }
@@ -405,8 +419,9 @@ function applySmartDimensions() {
  * that can physically fit inside the current trolley without exceeding weight or dimensions.
  */
 function calculateSingleProductMaxFit(l, w, h, wt) {
-  const L = state.trolley.length;
-  const W = state.trolley.width;
+  const legCD = state.trolley.legCD || 40;
+  const L = Math.max(50, state.trolley.length - 2 * legCD);
+  const W = Math.max(50, state.trolley.width - 2 * legCD);
   const H = state.trolley.height;
   const maxWt = state.trolley.maxWeight;
 
@@ -447,9 +462,13 @@ function optimizeMultiProductMix() {
 // BULLETPROOF 3D ZERO-OVERLAP PACKING ENGINE (Extreme Points)
 // -------------------------------------------------------------
 function calculatePacking() {
+  const legCD = state.trolley.legCD || 40;
+  const innerL = Math.max(50, state.trolley.length - 2 * legCD);
+  const innerW = Math.max(50, state.trolley.width - 2 * legCD);
+
   const container = {
-    l: state.trolley.length,
-    w: state.trolley.width,
+    l: innerL,
+    w: innerW,
     h: state.trolley.height,
     maxWt: state.trolley.maxWeight
   };
@@ -1073,11 +1092,12 @@ function render3DScene() {
     });
 
     const mesh = new THREE.Mesh(boxGeo, boxMat);
-    // Cargo Y starts at rack floor (G), then box Z-coordinate adds on top
+    const legCD = state.trolley.legCD || 40;
+    // Cargo Y starts at rack floor (G), X & Z offset by legCD to sit inside inner usable bounds A-2C x B-2C
     mesh.position.set(
-      it.x + it.packedL / 2,
+      legCD + it.x + it.packedL / 2,
       G + it.z + it.packedH / 2,
-      it.y + it.packedW / 2
+      legCD + it.y + it.packedW / 2
     );
 
     const edges = new THREE.EdgesGeometry(boxGeo);
@@ -1156,11 +1176,12 @@ function render2DTopView() {
   ctx.strokeRect(startX, startY, L * scale, W * scale);
 
   // Render Placed Stock Items
+  const legCD = state.trolley.legCD || 40;
   const packedItems = state.packedResult.packedItems;
   packedItems.forEach(it => {
     if (it.z <= state.sliceHeight && it.z + it.packedH >= state.sliceHeight - 300) {
-      const ix = startX + it.x * scale;
-      const iy = startY + it.y * scale;
+      const ix = startX + (legCD + it.x) * scale;
+      const iy = startY + (legCD + it.y) * scale;
       const iw = it.packedL * scale;
       const ih = it.packedW * scale;
 
@@ -1241,9 +1262,10 @@ function render2DSideView() {
   ctx.strokeRect(startX, startY - H * scale, L * scale, H * scale);
 
   // Placed Stock Items
+  const legCD = state.trolley.legCD || 40;
   const packedItems = state.packedResult.packedItems;
   packedItems.forEach(it => {
-    const ix = startX + it.x * scale;
+    const ix = startX + (legCD + it.x) * scale;
     const iy = startY - (it.z + it.packedH) * scale;
     const iw = it.packedL * scale;
     const ih = it.packedH * scale;
