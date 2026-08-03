@@ -649,6 +649,11 @@ function loadPuduModel(chassisType, onLoaded) {
   updateModelStatus(`Fetching 3D CAD: ${file}...`, 'loading');
 
   const loader = new THREE.GLTFLoader();
+  if (typeof THREE.DRACOLoader !== 'undefined') {
+    const dracoLoader = new THREE.DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    loader.setDRACOLoader(dracoLoader);
+  }
 
   const candidateUrls = [
     encodeURI(file),
