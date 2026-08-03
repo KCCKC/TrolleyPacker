@@ -454,14 +454,18 @@ body {
   transition: width 0.4s ease;
 }
 
-/* Visualizer Section (Right Side 3D Viewport - Fits Page with Sidebar) */
+.main-viewport {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Visualizer Section (Right Side 3D Viewport - Aligns with Left Sidebar) */
 .visualizer-card {
   display: flex;
   flex-direction: column;
-  /* Fill remaining viewport height: total vh minus header(48px) + metrics(90px) + gaps(~60px) */
-  height: calc(100vh - 220px);
-  min-height: 300px;
-  max-height: 520px;
+  flex: 1;
+  min-height: 480px;
 }
 
 .visualizer-header {
@@ -512,7 +516,7 @@ body {
   overflow: hidden;
   padding: 0;
   display: flex;
-  min-height: 200px;
+  min-height: 400px;
 }
 
 .tab-content {
@@ -520,17 +524,20 @@ body {
   width: 100%;
   height: 100%;
   position: relative;
+  flex: 1;
 }
 
 .tab-content.active {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 #canvas-3d-container {
   width: 100%;
   height: 100%;
-  min-height: 200px;
+  flex: 1;
+  min-height: 400px;
 }
 
 .viewport-controls-overlay {

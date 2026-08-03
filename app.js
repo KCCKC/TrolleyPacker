@@ -597,7 +597,7 @@ let scene, camera, renderer, controls, itemsGroup;
 
 // Model cache: keyed by chassisType ('mast' / 'underride')
 const puduModelCache = {};
-let currentLoadedChassis = null;
+const puduModelLoading = {};
 
 // Maps chassisType to the correct .glb file
 const CHASSIS_MODEL_FILES = {
@@ -610,30 +610,35 @@ const CHASSIS_MODEL_FILES = {
  * Calls onLoaded(scene) when ready.
  */
 function loadPuduModel(chassisType, onLoaded) {
-  if (puduModelCache[chassisType]) {
-    if (onLoaded) onLoaded(puduModelCache[chassisType]);
+  if (puduModelCache[chassisType] !== undefined) {
+    if (onLoaded) onLoaded(puduModelCache[chassisType] === 'failed' ? null : puduModelCache[chassisType]);
     return;
   }
 
+  if (puduModelLoading[chassisType]) return;
+
   if (typeof THREE === 'undefined' || typeof THREE.GLTFLoader === 'undefined') {
+    puduModelCache[chassisType] = 'failed';
     if (onLoaded) onLoaded(null);
     return;
   }
 
   const file = CHASSIS_MODEL_FILES[chassisType];
-  if (!file) { if (onLoaded) onLoaded(null); return; }
+  if (!file) {
+    puduModelCache[chassisType] = 'failed';
+    if (onLoaded) onLoaded(null);
+    return;
+  }
 
+  puduModelLoading[chassisType] = true;
   const loader = new THREE.GLTFLoader();
-
-  // Determine clean URL for GitHub Pages & Local Server
-  const fileUrl = window.location.protocol === 'file:'
-    ? `./${encodeURIComponent(file)}`
-    : file;
+  const fileUrl = encodeURI(file);
 
   loader.load(
     fileUrl,
     (gltf) => {
       puduModelCache[chassisType] = gltf.scene;
+      puduModelLoading[chassisType] = false;
       if (onLoaded) onLoaded(gltf.scene);
       render3DScene();
     },
@@ -644,12 +649,15 @@ function loadPuduModel(chassisType, onLoaded) {
         file,
         (gltf) => {
           puduModelCache[chassisType] = gltf.scene;
+          puduModelLoading[chassisType] = false;
           if (onLoaded) onLoaded(gltf.scene);
           render3DScene();
         },
         undefined,
         (err2) => {
-          console.error(`Could not load GLB model ${file}. Using 3D fallback engine.`, err2);
+          console.warn(`Could not load GLB model ${file}. Using 3D procedural engine.`, err2);
+          puduModelCache[chassisType] = 'failed';
+          puduModelLoading[chassisType] = false;
           if (onLoaded) onLoaded(null);
           render3DScene();
         }
@@ -828,12 +836,11 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
   // 3. ROBOT CHASSIS & MAST (T300.glb or T600 Underride.glb, or Procedural Fallback)
   // ============================================================
   let cachedModel = puduModelCache[chassisType];
-  if (!cachedModel && typeof loadPuduModel === 'function') {
+  if (cachedModel === undefined && !puduModelLoading[chassisType] && typeof loadPuduModel === 'function') {
     loadPuduModel(chassisType);
-    cachedModel = puduModelCache[chassisType];
   }
 
-  if (cachedModel) {
+  if (cachedModel && cachedModel !== 'failed') {
     const robotMesh = cachedModel.clone();
 
     // Reset rotation & scale first
