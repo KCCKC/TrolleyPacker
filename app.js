@@ -609,9 +609,22 @@ const CHASSIS_MODEL_FILES = {
  * Load (or return cached) GLTF model for the given chassis type.
  * Calls onLoaded(scene) when ready.
  */
+function updateModelStatus(statusText, statusClass) {
+  const badgeText = document.getElementById('model-status-text');
+  const badgeDot = document.querySelector('.model-status-badge .status-dot');
+  if (badgeText) badgeText.textContent = statusText;
+  if (badgeDot) badgeDot.className = `status-dot ${statusClass}`;
+}
+
 function loadPuduModel(chassisType, onLoaded) {
   if (puduModelCache[chassisType] !== undefined) {
-    if (onLoaded) onLoaded(puduModelCache[chassisType] === 'failed' ? null : puduModelCache[chassisType]);
+    if (puduModelCache[chassisType] === 'failed') {
+      updateModelStatus(`3D Engine: Procedural ${chassisType === 'mast' ? 'T300' : 'T600'}`, 'fallback');
+      if (onLoaded) onLoaded(null);
+    } else {
+      updateModelStatus(`3D CAD Model: ${CHASSIS_MODEL_FILES[chassisType]} Loaded`, 'active');
+      if (onLoaded) onLoaded(puduModelCache[chassisType]);
+    }
     return;
   }
 
@@ -619,6 +632,7 @@ function loadPuduModel(chassisType, onLoaded) {
 
   if (typeof THREE === 'undefined' || typeof THREE.GLTFLoader === 'undefined') {
     puduModelCache[chassisType] = 'failed';
+    updateModelStatus(`3D Engine: Procedural ${chassisType === 'mast' ? 'T300' : 'T600'}`, 'fallback');
     if (onLoaded) onLoaded(null);
     return;
   }
@@ -626,11 +640,14 @@ function loadPuduModel(chassisType, onLoaded) {
   const file = CHASSIS_MODEL_FILES[chassisType];
   if (!file) {
     puduModelCache[chassisType] = 'failed';
+    updateModelStatus(`3D Engine: Procedural ${chassisType === 'mast' ? 'T300' : 'T600'}`, 'fallback');
     if (onLoaded) onLoaded(null);
     return;
   }
 
   puduModelLoading[chassisType] = true;
+  updateModelStatus(`Fetching 3D CAD: ${file}...`, 'loading');
+
   const loader = new THREE.GLTFLoader();
 
   const candidateUrls = [
@@ -642,9 +659,10 @@ function loadPuduModel(chassisType, onLoaded) {
 
   function tryNextUrl(index) {
     if (index >= candidateUrls.length) {
-      console.warn(`Could not load GLB model ${file} from any candidate URL. Using 3D procedural engine.`);
+      console.warn(`Could not load GLB model ${file} from candidate URLs. Using procedural 3D model.`);
       puduModelCache[chassisType] = 'failed';
       puduModelLoading[chassisType] = false;
+      updateModelStatus(`3D Engine: Procedural ${chassisType === 'mast' ? 'T300' : 'T600'}`, 'fallback');
       if (onLoaded) onLoaded(null);
       render3DScene();
       return;
@@ -657,6 +675,7 @@ function loadPuduModel(chassisType, onLoaded) {
         puduModelCache[chassisType] = gltf.scene;
         puduModelLoading[chassisType] = false;
         console.log(`Successfully loaded 3D GLB model: ${file} from ${url}`);
+        updateModelStatus(`3D CAD Model: ${file} Loaded`, 'active');
         if (onLoaded) onLoaded(gltf.scene);
         render3DScene();
       },

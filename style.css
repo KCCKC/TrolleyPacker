@@ -578,6 +578,39 @@ body {
   color: #389e0d;
 }
 
+/* Top-Left 3D Model Loading Status Badge */
+.model-status-badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  z-index: 10;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #eab308;
+}
+.status-dot.active {
+  background-color: #10b981;
+}
+.status-dot.fallback {
+  background-color: #3b82f6;
+}
+
 /* Robot Orientation Indicator Compass Widget (Top-Right of 3D Viewport) */
 .robot-orientation-widget {
   position: absolute;
