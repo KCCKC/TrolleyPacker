@@ -632,38 +632,43 @@ function loadPuduModel(chassisType, onLoaded) {
 
   puduModelLoading[chassisType] = true;
   const loader = new THREE.GLTFLoader();
-  const fileUrl = encodeURI(file);
 
-  loader.load(
-    fileUrl,
-    (gltf) => {
-      puduModelCache[chassisType] = gltf.scene;
+  const candidateUrls = [
+    encodeURI(file),
+    `./${encodeURI(file)}`,
+    file,
+    `./${file}`
+  ];
+
+  function tryNextUrl(index) {
+    if (index >= candidateUrls.length) {
+      console.warn(`Could not load GLB model ${file} from any candidate URL. Using 3D procedural engine.`);
+      puduModelCache[chassisType] = 'failed';
       puduModelLoading[chassisType] = false;
-      if (onLoaded) onLoaded(gltf.scene);
+      if (onLoaded) onLoaded(null);
       render3DScene();
-    },
-    undefined,
-    (err) => {
-      console.warn(`Primary load for ${fileUrl} failed, trying raw path ${file}:`, err);
-      loader.load(
-        file,
-        (gltf) => {
-          puduModelCache[chassisType] = gltf.scene;
-          puduModelLoading[chassisType] = false;
-          if (onLoaded) onLoaded(gltf.scene);
-          render3DScene();
-        },
-        undefined,
-        (err2) => {
-          console.warn(`Could not load GLB model ${file}. Using 3D procedural engine.`, err2);
-          puduModelCache[chassisType] = 'failed';
-          puduModelLoading[chassisType] = false;
-          if (onLoaded) onLoaded(null);
-          render3DScene();
-        }
-      );
+      return;
     }
-  );
+
+    const url = candidateUrls[index];
+    loader.load(
+      url,
+      (gltf) => {
+        puduModelCache[chassisType] = gltf.scene;
+        puduModelLoading[chassisType] = false;
+        console.log(`Successfully loaded 3D GLB model: ${file} from ${url}`);
+        if (onLoaded) onLoaded(gltf.scene);
+        render3DScene();
+      },
+      undefined,
+      (err) => {
+        console.warn(`Attempt ${index + 1} failed for ${url}:`, err);
+        tryNextUrl(index + 1);
+      }
+    );
+  }
+
+  tryNextUrl(0);
 }
 
 function initThreeJS() {
@@ -675,18 +680,13 @@ function initThreeJS() {
     return;
   }
 
-  // Wait until the container has real pixel dimensions (layout must settle)
-  const w = container.clientWidth;
-  const h = container.clientHeight;
-  if (w < 50 || h < 50) {
-    setTimeout(initThreeJS, 200);
-    return;
-  }
-
   container.innerHTML = '';
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf1f5f9);
+
+  const w = container.clientWidth || 800;
+  const h = container.clientHeight || 700;
 
   camera = new THREE.PerspectiveCamera(45, w / h, 1, 30000);
   camera.position.set(1600, 1400, 1600);
@@ -718,15 +718,20 @@ function initThreeJS() {
   itemsGroup = new THREE.Group();
   scene.add(itemsGroup);
 
+  // Initial draw immediately
+  render3DScene();
+
   // Pre-load both models in background
   loadPuduModel('mast', () => { render3DScene(); });
   loadPuduModel('underride', () => {});
 
-  // Safety re-render after layout fully settles
-  setTimeout(() => {
-    resizeRenderer();
-    render3DScene();
-  }, 500);
+  // Observe container size adjustments dynamically
+  if (window.ResizeObserver) {
+    new ResizeObserver(() => {
+      resizeRenderer();
+      render3DScene();
+    }).observe(container);
+  }
 
   window.addEventListener('resize', () => {
     resizeRenderer();
@@ -746,11 +751,13 @@ function initThreeJS() {
 function resizeRenderer() {
   const container = document.getElementById('canvas-3d-container');
   if (!renderer || !camera || !container) return;
-  const w = container.clientWidth || 400;
-  const h = container.clientHeight || 300;
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  if (w > 0 && h > 0) {
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  }
 }
 
 function updateRobotOrientationCompass() {
@@ -841,41 +848,62 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
   }
 
   if (cachedModel && cachedModel !== 'failed') {
-    const robotMesh = cachedModel.clone();
+    const robotMesh = cachedModel.clone(true);
 
     // Reset rotation & scale first
     robotMesh.rotation.set(0, 0, 0);
     robotMesh.scale.set(1, 1, 1);
+    robotMesh.updateMatrixWorld(true);
 
-    // Compute raw unscaled bounding box
-    const bbox = new THREE.Box3().setFromObject(robotMesh);
-    const rawSize = new THREE.Vector3();
-    bbox.getSize(rawSize);
+    // Compute bounding box strictly over mesh geometries (ignoring cameras/lights)
+    const bbox = new THREE.Box3();
+    let hasMesh = false;
+    robotMesh.traverse(child => {
+      if (child.isMesh && child.geometry) {
+        child.geometry.computeBoundingBox();
+        bbox.expandByObject(child);
+        hasMesh = true;
 
-    // Physical height scale factor (proportional 1:1 uniform scale)
-    const targetH = robotSpec.height;
-    const scaleFactor = rawSize.y > 0 ? (targetH / rawSize.y) : 1;
-    robotMesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        // Enhance material visibility under 3D lighting
+        if (child.material) {
+          child.material.side = THREE.DoubleSide;
+          if (child.material.metalness > 0.8) {
+            child.material.metalness = 0.4;
+          }
+          child.material.needsUpdate = true;
+        }
+      }
+    });
 
-    // Rotate model 180 degrees so mast column faces front direction of motion
-    robotMesh.rotation.y = Math.PI;
+    if (hasMesh && !bbox.isEmpty()) {
+      const rawSize = new THREE.Vector3();
+      bbox.getSize(rawSize);
 
-    // Re-calculate scaled bounding box
-    const scaledBox = new THREE.Box3().setFromObject(robotMesh);
-    const scaledCenter = new THREE.Vector3();
-    scaledBox.getCenter(scaledCenter);
+      // Scale model to match physical height spec (mm)
+      const targetH = robotSpec.height;
+      const scaleFactor = rawSize.y > 0 ? (targetH / rawSize.y) : 1;
+      robotMesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-    // Align robot base on ground Y=0 and center on rack X & Z axes
-    robotMesh.position.x = (L / 2) - scaledCenter.x;
-    robotMesh.position.y = -scaledBox.min.y;
+      // Rotate model 180 degrees so mast/front faces front direction of motion
+      robotMesh.rotation.y = Math.PI;
 
-    if (chassisType === 'mast') {
-      robotMesh.position.z = -scaledCenter.z - 50;
-    } else {
-      robotMesh.position.z = (W / 2) - scaledCenter.z;
+      // Re-calculate scaled bounding box
+      const scaledBox = new THREE.Box3().setFromObject(robotMesh);
+      const scaledCenter = new THREE.Vector3();
+      scaledBox.getCenter(scaledCenter);
+
+      // Align robot base on ground Y=0 and center on X & Z
+      robotMesh.position.x = (L / 2) - scaledCenter.x;
+      robotMesh.position.y = -scaledBox.min.y;
+
+      if (chassisType === 'mast') {
+        robotMesh.position.z = -scaledCenter.z - 50;
+      } else {
+        robotMesh.position.z = (W / 2) - scaledCenter.z;
+      }
+
+      group.add(robotMesh);
     }
-
-    group.add(robotMesh);
   } else {
     // Procedural Fallback if GLTF is loading
     const darkMat   = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6, metalness: 0.4 });
