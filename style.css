@@ -460,12 +460,12 @@ body {
   height: 100%;
 }
 
-/* Visualizer Section (Right Side 3D Viewport - Aligns with Left Sidebar) */
+/* Visualizer Section (Right Side 3D Viewport - Expanded Canvas Height) */
 .visualizer-card {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 480px;
+  min-height: 750px;
 }
 
 .visualizer-header {
@@ -516,7 +516,7 @@ body {
   overflow: hidden;
   padding: 0;
   display: flex;
-  min-height: 400px;
+  min-height: 700px;
 }
 
 .tab-content {
@@ -537,7 +537,7 @@ body {
   width: 100%;
   height: 100%;
   flex: 1;
-  min-height: 400px;
+  min-height: 700px;
 }
 
 .viewport-controls-overlay {
@@ -684,7 +684,7 @@ body {
   background-color: #f1f5f9;
   padding: 0.5rem;
   overflow: hidden;
-  min-height: 0;
+  min-height: 700px;
 }
 
 #canvas-top-2d, #canvas-side-2d {
@@ -693,10 +693,9 @@ body {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   cursor: default;
-  width: 100%;
-  height: 100%;
   max-width: 100%;
   max-height: 100%;
+  object-fit: contain;
 }
 
 .side-info-bar {

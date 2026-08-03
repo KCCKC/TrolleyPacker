@@ -1042,6 +1042,13 @@ function render3DScene() {
 function render2DTopView() {
   const canvas = document.getElementById('canvas-top-2d');
   if (!canvas) return;
+
+  const parent = canvas.parentElement;
+  if (parent && parent.clientWidth > 0 && parent.clientHeight > 0) {
+    canvas.width = Math.min(parent.clientWidth - 20, 800);
+    canvas.height = Math.min(parent.clientHeight - 20, 650);
+  }
+
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -1121,6 +1128,13 @@ function render2DTopView() {
 function render2DSideView() {
   const canvas = document.getElementById('canvas-side-2d');
   if (!canvas) return;
+
+  const parent = canvas.parentElement;
+  if (parent && parent.clientWidth > 0 && parent.clientHeight > 0) {
+    canvas.width = Math.min(parent.clientWidth - 20, 800);
+    canvas.height = Math.min(parent.clientHeight - 20, 650);
+  }
+
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
