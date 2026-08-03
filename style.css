@@ -158,8 +158,6 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.03em;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .label-with-badge {
@@ -175,6 +173,7 @@ body {
   margin-bottom: 0;
   font-size: 0.73rem;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .inner-dim-badge {

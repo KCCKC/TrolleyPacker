@@ -75,13 +75,13 @@ function validatePuduParameters() {
 
   const badgeL = document.getElementById('inner-l-badge');
   const badgeW = document.getElementById('inner-w-badge');
-  if (badgeL) badgeL.textContent = `Actual Inner Length (A - 2C): ${innerL} mm`;
-  if (badgeW) badgeW.textContent = `Actual Inner Width (B - 2C): ${innerW} mm`;
+  if (badgeL) badgeL.textContent = `Actual Inner Value: ${innerL} mm`;
+  if (badgeW) badgeW.textContent = `Actual Inner Value: ${innerW} mm`;
 
   const hintL = document.getElementById('product-max-l-hint');
   const hintW = document.getElementById('product-max-w-hint');
-  if (hintL) hintL.textContent = `Max Usable Inner Length: ${innerL} mm`;
-  if (hintW) hintW.textContent = `Max Usable Inner Width: ${innerW} mm`;
+  if (hintL) hintL.textContent = `Actual Inner Value: ${innerL} mm`;
+  if (hintW) hintW.textContent = `Actual Inner Value: ${innerW} mm`;
 
   const inputPl = document.getElementById('p-l');
   const inputPw = document.getElementById('p-w');
