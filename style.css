@@ -560,6 +560,12 @@ body {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.controls-right-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .validation-banner {
   padding: 0.6rem 0.8rem;
   border-radius: 8px;
