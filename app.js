@@ -850,57 +850,54 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
   if (cachedModel && cachedModel !== 'failed') {
     const robotMesh = cachedModel.clone(true);
 
-    // Reset rotation & scale first
+    // 1. Reset transforms
+    robotMesh.position.set(0, 0, 0);
     robotMesh.rotation.set(0, 0, 0);
     robotMesh.scale.set(1, 1, 1);
     robotMesh.updateMatrixWorld(true);
 
-    // Compute bounding box strictly over mesh geometries (ignoring cameras/lights)
-    const bbox = new THREE.Box3();
-    let hasMesh = false;
-    robotMesh.traverse(child => {
-      if (child.isMesh && child.geometry) {
-        child.geometry.computeBoundingBox();
-        bbox.expandByObject(child);
-        hasMesh = true;
+    // 2. Measure raw unscaled bounding box
+    const rawBox = new THREE.Box3().setFromObject(robotMesh);
+    const rawSize = new THREE.Vector3();
+    rawBox.getSize(rawSize);
 
-        // Enhance material visibility under 3D lighting
-        if (child.material) {
-          child.material.side = THREE.DoubleSide;
-          if (child.material.metalness > 0.8) {
-            child.material.metalness = 0.4;
-          }
-          child.material.needsUpdate = true;
-        }
-      }
-    });
-
-    if (hasMesh && !bbox.isEmpty()) {
-      const rawSize = new THREE.Vector3();
-      bbox.getSize(rawSize);
-
-      // Scale model to match physical height spec (mm)
+    if (rawSize.y > 0) {
+      // 3. Compute physical scale factor (normalizing meters/cm/mm to spec mm)
       const targetH = robotSpec.height;
-      const scaleFactor = rawSize.y > 0 ? (targetH / rawSize.y) : 1;
+      const scaleFactor = targetH / rawSize.y;
       robotMesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-      // Rotate model 180 degrees so mast/front faces front direction of motion
+      // 4. Orient model (rotate 180 deg to face front)
       robotMesh.rotation.y = Math.PI;
 
-      // Re-calculate scaled bounding box
+      // 5. Force update matrix world so bounding box measurements are 100% accurate!
+      robotMesh.updateMatrixWorld(true);
+
+      // 6. Measure scaled bounding box
       const scaledBox = new THREE.Box3().setFromObject(robotMesh);
       const scaledCenter = new THREE.Vector3();
       scaledBox.getCenter(scaledCenter);
 
-      // Align robot base on ground Y=0 and center on X & Z
+      // 7. Align robot base flat on ground (Y = 0) and center on X & Z
       robotMesh.position.x = (L / 2) - scaledCenter.x;
       robotMesh.position.y = -scaledBox.min.y;
 
       if (chassisType === 'mast') {
-        robotMesh.position.z = -scaledCenter.z - 50;
+        robotMesh.position.z = -scaledCenter.z - 40;
       } else {
         robotMesh.position.z = (W / 2) - scaledCenter.z;
       }
+
+      // 8. Traverse materials to ensure high visibility under 3D lights
+      robotMesh.traverse(child => {
+        if (child.isMesh && child.material) {
+          child.material.side = THREE.DoubleSide;
+          if (child.material.metalness > 0.8) {
+            child.material.metalness = 0.3;
+          }
+          child.material.needsUpdate = true;
+        }
+      });
 
       group.add(robotMesh);
     }
