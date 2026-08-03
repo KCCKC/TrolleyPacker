@@ -673,6 +673,20 @@ function loadPuduModel(chassisType, onLoaded) {
     loader.load(
       url,
       (gltf) => {
+        // Fix PBR metallic factor (pygltflib metallicFactor: 1.0 makes meshes pitch black without env map)
+        gltf.scene.traverse(child => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            if (child.material) {
+              child.material.metalness = 0.1;
+              child.material.roughness = 0.5;
+              child.material.side = THREE.DoubleSide;
+              child.material.needsUpdate = true;
+            }
+          }
+        });
+
         puduModelCache[chassisType] = gltf.scene;
         puduModelLoading[chassisType] = false;
         console.log(`Successfully loaded 3D GLB model: ${file} from ${url}`);
