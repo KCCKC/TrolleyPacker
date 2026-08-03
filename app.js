@@ -674,10 +674,10 @@ function initThreeJS() {
   const w = container.clientWidth || 700;
   const h = container.clientHeight || 500;
 
-  camera = new THREE.PerspectiveCamera(45, w / h, 10, 10000);
+  camera = new THREE.PerspectiveCamera(45, w / h, 1, 30000);
   camera.position.set(1600, 1400, 1600);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
   renderer.setSize(w, h);
   container.appendChild(renderer.domElement);
 
@@ -685,6 +685,8 @@ function initThreeJS() {
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    controls.minDistance = 200;
+    controls.maxDistance = 12000;
   }
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
@@ -854,7 +856,7 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
     robotMesh.position.y = -scaledBox.min.y;
 
     if (chassisType === 'mast') {
-      robotMesh.position.z = -scaledBox.min.z - (scaledBox.max.z - scaledBox.min.z) * 0.15;
+      robotMesh.position.z = -scaledCenter.z - 50;
     } else {
       robotMesh.position.z = (W / 2) - scaledCenter.z;
     }
