@@ -623,6 +623,8 @@ function loadPuduModel(chassisType, onLoaded) {
   const file = CHASSIS_MODEL_FILES[chassisType];
   if (!file) { if (onLoaded) onLoaded(null); return; }
 
+  const loader = new THREE.GLTFLoader();
+
   // Determine clean URL for GitHub Pages & Local Server
   const fileUrl = window.location.protocol === 'file:'
     ? `./${encodeURIComponent(file)}`
