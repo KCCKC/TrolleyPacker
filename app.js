@@ -627,21 +627,32 @@ function loadPuduModel(chassisType, onLoaded) {
 
   const loader = new THREE.GLTFLoader();
 
-  // Try encoded URI first, fallback to raw string if needed
-  const primaryUrl = encodeURI(file);
-  loader.load(primaryUrl, (gltf) => {
+  // Compute absolute path base relative to repository root on GitHub Pages
+  const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+  const relativeFile = file;
+  const fullPathFile = basePath + file;
+  const encodedFile = encodeURI(file);
+
+  loader.load(encodedFile, (gltf) => {
     puduModelCache[chassisType] = gltf.scene;
     if (onLoaded) onLoaded(gltf.scene);
     render3DScene();
   }, undefined, (err) => {
-    console.warn(`Primary GLB load failed for ${primaryUrl}, trying raw file path ${file}:`, err);
-    loader.load(file, (gltf) => {
+    console.warn(`Attempt 1 failed for ${encodedFile}, trying fullPathFile ${fullPathFile}:`, err);
+    loader.load(fullPathFile, (gltf) => {
       puduModelCache[chassisType] = gltf.scene;
       if (onLoaded) onLoaded(gltf.scene);
       render3DScene();
     }, undefined, (err2) => {
-      console.error(`GLB load failed for both paths of ${file}. Using procedural 3D model fallback.`, err2);
-      if (onLoaded) onLoaded(null);
+      console.warn(`Attempt 2 failed, trying raw file ${relativeFile}:`, err2);
+      loader.load(relativeFile, (gltf) => {
+        puduModelCache[chassisType] = gltf.scene;
+        if (onLoaded) onLoaded(gltf.scene);
+        render3DScene();
+      }, undefined, (err3) => {
+        console.error(`All GLB load attempts failed for ${file}.`, err3);
+        if (onLoaded) onLoaded(null);
+      });
     });
   });
 }
