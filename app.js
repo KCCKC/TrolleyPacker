@@ -35,8 +35,7 @@ const state = {
     totalWeight: 0
   },
   activeTab: '3d',
-  sliceHeight: 1300,
-  useCadGlb: false
+  sliceHeight: 1300
 };
 
 const PUDU_PRESETS = {
@@ -752,27 +751,12 @@ function initThreeJS() {
   itemsGroup = new THREE.Group();
   scene.add(itemsGroup);
 
-  // Initial draw immediately (0ms instant procedural render!)
+  // Initial draw immediately
   render3DScene();
 
-  // Handle CAD GLB toggle button
-  const toggleGlbBtn = document.getElementById('btn-toggle-glb');
-  if (toggleGlbBtn) {
-    toggleGlbBtn.addEventListener('click', () => {
-      state.useCadGlb = !state.useCadGlb;
-      if (state.useCadGlb) {
-        toggleGlbBtn.textContent = '⚡ Switch to Fast 3D';
-        toggleGlbBtn.classList.remove('btn-outline');
-        toggleGlbBtn.classList.add('btn-primary');
-        loadPuduModel(state.trolley.chassisType, () => { render3DScene(); });
-      } else {
-        toggleGlbBtn.textContent = '📦 Load 18MB CAD GLB';
-        toggleGlbBtn.classList.remove('btn-primary');
-        toggleGlbBtn.classList.add('btn-outline');
-        render3DScene();
-      }
-    });
-  }
+  // Auto-load CAD GLB models on startup
+  loadPuduModel('mast', () => { render3DScene(); });
+  loadPuduModel('underride', () => {});
 
   // Observe container size adjustments dynamically
   if (window.ResizeObserver) {
@@ -889,17 +873,16 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
   group.add(plate);
 
   // ============================================================
-  // 3. ROBOT CHASSIS & MAST (Fast Procedural Default or Optional 18MB CAD GLB)
+  // 3. ROBOT CHASSIS & MAST (3D CAD GLB Model or Procedural Fallback)
   // ============================================================
+  let cachedModel = puduModelCache[chassisType];
+  if (cachedModel === undefined && !puduModelLoading[chassisType] && typeof loadPuduModel === 'function') {
+    loadPuduModel(chassisType);
+  }
+
   let glbRendered = false;
 
-  if (state.useCadGlb) {
-    let cachedModel = puduModelCache[chassisType];
-    if (cachedModel === undefined && !puduModelLoading[chassisType] && typeof loadPuduModel === 'function') {
-      loadPuduModel(chassisType);
-    }
-
-    if (cachedModel && cachedModel !== 'failed') {
+  if (cachedModel && cachedModel !== 'failed') {
     try {
       const robotMesh = cachedModel.clone(true);
 
@@ -962,7 +945,6 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
       glbRendered = false;
     }
   }
-}
 
   if (!glbRendered) {
     // Procedural Fallback if GLTF is loading
