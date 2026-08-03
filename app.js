@@ -847,61 +847,73 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
     loadPuduModel(chassisType);
   }
 
+  let glbRendered = false;
+
   if (cachedModel && cachedModel !== 'failed') {
-    const robotMesh = cachedModel.clone(true);
+    try {
+      const robotMesh = cachedModel.clone(true);
 
-    // 1. Reset transforms
-    robotMesh.position.set(0, 0, 0);
-    robotMesh.rotation.set(0, 0, 0);
-    robotMesh.scale.set(1, 1, 1);
-    robotMesh.updateMatrixWorld(true);
-
-    // 2. Measure raw unscaled bounding box
-    const rawBox = new THREE.Box3().setFromObject(robotMesh);
-    const rawSize = new THREE.Vector3();
-    rawBox.getSize(rawSize);
-
-    if (rawSize.y > 0) {
-      // 3. Compute physical scale factor (normalizing meters/cm/mm to spec mm)
-      const targetH = robotSpec.height;
-      const scaleFactor = targetH / rawSize.y;
-      robotMesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-      // 4. Orient model (rotate 180 deg to face front)
-      robotMesh.rotation.y = Math.PI;
-
-      // 5. Force update matrix world so bounding box measurements are 100% accurate!
+      // 1. Reset transforms
+      robotMesh.position.set(0, 0, 0);
+      robotMesh.rotation.set(0, 0, 0);
+      robotMesh.scale.set(1, 1, 1);
       robotMesh.updateMatrixWorld(true);
 
-      // 6. Measure scaled bounding box
-      const scaledBox = new THREE.Box3().setFromObject(robotMesh);
-      const scaledCenter = new THREE.Vector3();
-      scaledBox.getCenter(scaledCenter);
+      // 2. Measure raw unscaled bounding box
+      const rawBox = new THREE.Box3().setFromObject(robotMesh);
+      const rawSize = new THREE.Vector3();
+      rawBox.getSize(rawSize);
 
-      // 7. Align robot base flat on ground (Y = 0) and center on X & Z
-      robotMesh.position.x = (L / 2) - scaledCenter.x;
-      robotMesh.position.y = -scaledBox.min.y;
+      if (rawSize.y > 0.001) {
+        // 3. Compute physical scale factor (normalizing meters/cm/mm to spec mm)
+        const targetH = robotSpec.height;
+        let scaleFactor = targetH / rawSize.y;
+        if (scaleFactor <= 0 || !isFinite(scaleFactor)) scaleFactor = 1;
 
-      if (chassisType === 'mast') {
-        robotMesh.position.z = -scaledCenter.z - 40;
-      } else {
-        robotMesh.position.z = (W / 2) - scaledCenter.z;
-      }
+        robotMesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-      // 8. Traverse materials to ensure high visibility under 3D lights
-      robotMesh.traverse(child => {
-        if (child.isMesh && child.material) {
-          child.material.side = THREE.DoubleSide;
-          if (child.material.metalness > 0.8) {
-            child.material.metalness = 0.3;
-          }
-          child.material.needsUpdate = true;
+        // 4. Orient model (rotate 180 deg to face front)
+        robotMesh.rotation.y = Math.PI;
+
+        // 5. Force update matrix world so bounding box measurements are 100% accurate!
+        robotMesh.updateMatrixWorld(true);
+
+        // 6. Measure scaled bounding box
+        const scaledBox = new THREE.Box3().setFromObject(robotMesh);
+        const scaledCenter = new THREE.Vector3();
+        scaledBox.getCenter(scaledCenter);
+
+        // 7. Align robot base flat on ground (Y = 0) and center on X & Z
+        robotMesh.position.x = (L / 2) - scaledCenter.x;
+        robotMesh.position.y = -scaledBox.min.y;
+
+        if (chassisType === 'mast') {
+          robotMesh.position.z = -scaledCenter.z - 40;
+        } else {
+          robotMesh.position.z = (W / 2) - scaledCenter.z;
         }
-      });
 
-      group.add(robotMesh);
+        // 8. Traverse materials to ensure high visibility under 3D lights
+        robotMesh.traverse(child => {
+          if (child.isMesh && child.material) {
+            child.material.side = THREE.DoubleSide;
+            if (child.material.metalness > 0.8) {
+              child.material.metalness = 0.3;
+            }
+            child.material.needsUpdate = true;
+          }
+        });
+
+        group.add(robotMesh);
+        glbRendered = true;
+      }
+    } catch (err) {
+      console.warn("GLB mesh placement encountered error, using procedural model fallback:", err);
+      glbRendered = false;
     }
-  } else {
+  }
+
+  if (!glbRendered) {
     // Procedural Fallback if GLTF is loading
     const darkMat   = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6, metalness: 0.4 });
     const accentMat = new THREE.MeshStandardMaterial({ color: 0x0052cc, roughness: 0.3, metalness: 0.6, emissive: 0x002b80 });
