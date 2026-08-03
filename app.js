@@ -78,6 +78,16 @@ function validatePuduParameters() {
   if (badgeL) badgeL.textContent = `Inner: ${innerL} mm`;
   if (badgeW) badgeW.textContent = `Inner: ${innerW} mm`;
 
+  const hintL = document.getElementById('product-max-l-hint');
+  const hintW = document.getElementById('product-max-w-hint');
+  if (hintL) hintL.textContent = `Max Usable: ${innerL} mm`;
+  if (hintW) hintW.textContent = `Max Usable: ${innerW} mm`;
+
+  const inputPl = document.getElementById('p-l');
+  const inputPw = document.getElementById('p-w');
+  if (inputPl) inputPl.max = innerL;
+  if (inputPw) inputPw.max = innerW;
+
   if (innerL < 100 || innerW < 100) {
     warnings.push(`Inner Usable Area (${innerL}×${innerW}mm) is too small! Increase A/B or decrease Leg C/D.`);
   }
@@ -249,6 +259,15 @@ function initUI() {
     const wt = parseFloat(document.getElementById('p-wt').value) || 15;
     const qty = parseInt(document.getElementById('p-qty').value) || 4;
 
+    const legCD = state.trolley.legCD || 40;
+    const innerL = Math.max(0, state.trolley.length - 2 * legCD);
+    const innerW = Math.max(0, state.trolley.width - 2 * legCD);
+
+    if (l > innerL || w > innerW) {
+      alert(`⚠️ Product Dimension Warning!\n\nProduct dimensions (${l} × ${w} mm) exceed maximum inner usable rack space (${innerL} × ${innerW} mm).\n\n• Outer Length A = ${state.trolley.length} mm\n• Outer Width B = ${state.trolley.width} mm\n• Leg C/D = ${legCD} mm\n• Usable Inner Dimension = A - 2C = ${innerL} mm\n\nPlease reduce product size or increase trolley Length A / Width B.`);
+      return;
+    }
+
     state.products.push({
       id: 'P_' + Date.now(),
       name, l, w, h, wt, qty,
@@ -357,41 +376,49 @@ function suggestSmartTrolleyDimensions() {
     return;
   }
 
-  const currL = state.trolley.length;
-  const currW = state.trolley.width;
+  const legCD = state.trolley.legCD || 40;
+  const currOuterL = state.trolley.length;
+  const currOuterW = state.trolley.width;
+  const currInnerL = Math.max(0, currOuterL - 2 * legCD);
+  const currInnerW = Math.max(0, currOuterW - 2 * legCD);
 
   const maxItemL = Math.max(...state.products.map(p => p.l));
   const maxItemW = Math.max(...state.products.map(p => p.w));
 
-  let suggestedL = currL;
-  let suggestedW = currW;
+  let suggestedOuterA = currOuterL;
+  let suggestedOuterB = currOuterW;
 
-  [2, 3].forEach(mult => {
-    let neededL = maxItemL * mult;
-    let neededW = maxItemW * mult;
-    if (neededL <= MAX_LIMITS.length && neededL > currL) suggestedL = neededL;
-    if (neededW <= MAX_LIMITS.width && neededW > currW) suggestedW = neededW;
+  [1, 2, 3].forEach(mult => {
+    let neededInnerL = maxItemL * mult;
+    let neededInnerW = maxItemW * mult;
+    let targetOuterA = neededInnerL + 2 * legCD;
+    let targetOuterB = neededInnerW + 2 * legCD;
+
+    if (targetOuterA <= MAX_LIMITS.length && targetOuterA > suggestedOuterA) suggestedOuterA = targetOuterA;
+    if (targetOuterB <= MAX_LIMITS.width && targetOuterB > suggestedOuterB) suggestedOuterB = targetOuterB;
   });
 
-  if (suggestedL === currL && suggestedW === currW) {
+  if (suggestedOuterA === currOuterL && suggestedOuterB === currOuterW) {
     alert("💡 Current trolley dimensions are already optimal for the added products!");
     return;
   }
 
-  const currGrid = Math.floor(currL / maxItemL) * Math.floor(currW / maxItemW);
-  const suggGrid = Math.floor(suggestedL / maxItemL) * Math.floor(suggestedW / maxItemW);
+  const suggInnerL = suggestedOuterA - 2 * legCD;
+  const suggInnerW = suggestedOuterB - 2 * legCD;
+  const currGrid = Math.floor(currInnerL / maxItemL) * Math.floor(currInnerW / maxItemW);
+  const suggGrid = Math.floor(suggInnerL / maxItemL) * Math.floor(suggInnerW / maxItemW);
 
-  state.pendingSmartSuggestion = { length: suggestedL, width: suggestedW, height: state.trolley.height };
+  state.pendingSmartSuggestion = { length: suggestedOuterA, width: suggestedOuterB, height: state.trolley.height };
 
   const modalBody = document.getElementById('smart-modal-body');
   modalBody.innerHTML = `
     <div class="analysis-box">
       <p><strong>Item Dimensions:</strong> ${maxItemL}mm × ${maxItemW}mm</p>
-      <p><strong>Current Trolley:</strong> ${currL}mm × ${currW}mm (Fits <strong>${currGrid} item/layer</strong>)</p>
-      <p><strong>Suggested Trolley:</strong> <span class="highlight">${suggestedL}mm × ${suggestedW}mm</span> (Fits <strong>${suggGrid} items/layer!</strong>)</p>
-      <div class="gain-badge">+${(suggGrid - currGrid) * 100}% Capacity Boost</div>
+      <p><strong>Current Trolley:</strong> Outer ${currOuterL}×${currOuterW}mm (Inner Usable: <strong>${currInnerL}×${currInnerW}mm</strong> → Fits ${currGrid} item/layer)</p>
+      <p><strong>Suggested Trolley:</strong> <span class="highlight">Outer ${suggestedOuterA}×${suggestedOuterB}mm</span> (Inner Usable: <strong>${suggInnerL}×${suggInnerW}mm</strong> → Fits <strong>${suggGrid} items/layer!</strong>)</p>
+      <div class="gain-badge">+${Math.max(0, (suggGrid - currGrid) * 100)}% Capacity Boost</div>
     </div>
-    <p class="mt-2 text-muted">Would you like to confirm and update trolley dimensions to ${suggestedL}mm × ${suggestedW}mm?</p>
+    <p class="mt-2 text-muted">Would you like to confirm and update trolley dimensions to Outer Length ${suggestedOuterA}mm × Outer Width ${suggestedOuterB}mm (Inner Usable ${suggInnerL}×${suggInnerW}mm)?</p>
   `;
 
   document.getElementById('smart-modal').classList.remove('hidden');

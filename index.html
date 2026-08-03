@@ -133,12 +133,18 @@
             <!-- Row 1: Dimensions (L & W) -->
             <div class="dim-grid-2 mt-2">
               <div class="form-group">
-                <label>Length L (mm)</label>
-                <input type="number" id="p-l" value="600" min="50" max="1200" required class="form-control">
+                <div class="label-with-badge">
+                  <label>Length L (mm)</label>
+                  <span class="inner-dim-badge" id="product-max-l-hint">Max Usable: 720 mm</span>
+                </div>
+                <input type="number" id="p-l" value="600" min="50" max="720" required class="form-control">
               </div>
               <div class="form-group">
-                <label>Width W (mm)</label>
-                <input type="number" id="p-w" value="600" min="50" max="1200" required class="form-control">
+                <div class="label-with-badge">
+                  <label>Width W (mm)</label>
+                  <span class="inner-dim-badge" id="product-max-w-hint">Max Usable: 720 mm</span>
+                </div>
+                <input type="number" id="p-w" value="600" min="50" max="720" required class="form-control">
               </div>
             </div>
 
