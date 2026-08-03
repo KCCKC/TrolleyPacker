@@ -139,6 +139,11 @@ function initUI() {
   }
 
   if (dimGuideImg) {
+    dimGuideImg.onerror = () => {
+      if (dimGuideImg.src.endsWith('.png')) {
+        dimGuideImg.src = 'pudu_rack_dimensions_guide.jpg';
+      }
+    };
     dimGuideImg.addEventListener('click', () => {
       const overlay = document.createElement('div');
       overlay.className = 'dim-guide-overlay';
@@ -622,27 +627,22 @@ function loadPuduModel(chassisType, onLoaded) {
 
   const loader = new THREE.GLTFLoader();
 
-  // Handle URL encoding for filenames with spaces (e.g., T600 Underride.glb)
-  const targetUrl = window.location.protocol === 'file:'
-    ? `http://127.0.0.1:8000/${encodeURIComponent(file)}`
-    : encodeURI(file);
-
-  loader.load(targetUrl, (gltf) => {
+  // Try encoded URI first, fallback to raw string if needed
+  const primaryUrl = encodeURI(file);
+  loader.load(primaryUrl, (gltf) => {
     puduModelCache[chassisType] = gltf.scene;
     if (onLoaded) onLoaded(gltf.scene);
     render3DScene();
   }, undefined, (err) => {
-    if (targetUrl !== file) {
-      loader.load(file, (gltf) => {
-        puduModelCache[chassisType] = gltf.scene;
-        if (onLoaded) onLoaded(gltf.scene);
-        render3DScene();
-      }, undefined, () => {
-        if (onLoaded) onLoaded(null);
-      });
-    } else {
+    console.warn(`Primary GLB load failed for ${primaryUrl}, trying raw file path ${file}:`, err);
+    loader.load(file, (gltf) => {
+      puduModelCache[chassisType] = gltf.scene;
+      if (onLoaded) onLoaded(gltf.scene);
+      render3DScene();
+    }, undefined, (err2) => {
+      console.error(`GLB load failed for both paths of ${file}. Using procedural 3D model fallback.`, err2);
       if (onLoaded) onLoaded(null);
-    }
+    });
   });
 }
 
