@@ -164,30 +164,31 @@ body {
 
 .label-with-badge {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.15rem;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.35rem;
 }
 
 .label-with-badge label {
   margin-bottom: 0;
-  font-size: 0.72rem;
+  font-size: 0.73rem;
   font-weight: 700;
 }
 
 .inner-dim-badge {
-  display: inline-block;
-  font-size: 0.68rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--pudu-blue);
-  background-color: rgba(0, 82, 204, 0.09);
-  padding: 0.12rem 0.4rem;
-  border-radius: 4px;
-  border: 1px solid rgba(0, 82, 204, 0.18);
+  background-color: rgba(0, 82, 204, 0.08);
+  padding: 0.18rem 0.55rem;
+  border-radius: 5px;
+  border: 1px solid rgba(0, 82, 204, 0.2);
   white-space: nowrap;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
 }
 
 .form-control {
