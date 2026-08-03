@@ -827,34 +827,35 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
   if (cachedModel) {
     const robotMesh = cachedModel.clone();
 
-    // Rotate model 180 degrees so mast column faces the left side (direction of motion)
-    robotMesh.rotation.y = Math.PI;
+    // Reset rotation & scale first
+    robotMesh.rotation.set(0, 0, 0);
+    robotMesh.scale.set(1, 1, 1);
 
-    // Compute bounding box after rotation
+    // Compute raw unscaled bounding box
     const bbox = new THREE.Box3().setFromObject(robotMesh);
-    const size = new THREE.Vector3();
-    bbox.getSize(size);
+    const rawSize = new THREE.Vector3();
+    bbox.getSize(rawSize);
 
-    // Scale to exact physical PUDU height spec
+    // Physical height scale factor (proportional 1:1 uniform scale)
     const targetH = robotSpec.height;
-    const scaleFactor = targetH / (size.y || 1);
+    const scaleFactor = rawSize.y > 0 ? (targetH / rawSize.y) : 1;
     robotMesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+    // Rotate model 180 degrees so mast column faces front direction of motion
+    robotMesh.rotation.y = Math.PI;
 
     // Re-calculate scaled bounding box
     const scaledBox = new THREE.Box3().setFromObject(robotMesh);
     const scaledCenter = new THREE.Vector3();
     scaledBox.getCenter(scaledCenter);
 
-    // Center robot on rack X axis, rest base on ground Y=0
+    // Align robot base on ground Y=0 and center on rack X & Z axes
     robotMesh.position.x = (L / 2) - scaledCenter.x;
     robotMesh.position.y = -scaledBox.min.y;
 
     if (chassisType === 'mast') {
-      // Perform addition of +6 grid units (+600mm) along Z axis
-      const modelDepth = scaledBox.max.z - scaledBox.min.z;
-      robotMesh.position.z = -scaledBox.max.z + (modelDepth * 0.25) + 270;
+      robotMesh.position.z = -scaledBox.min.z - (scaledBox.max.z - scaledBox.min.z) * 0.15;
     } else {
-      // Underride: center platform under rack
       robotMesh.position.z = (W / 2) - scaledCenter.z;
     }
 

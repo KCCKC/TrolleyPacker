@@ -77,10 +77,10 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* Dashboard Layout (25% Left Parameters Sidebar | 75% Right 3D Visualizer Workspace) */
+/* Dashboard Layout (30% Left Parameters Sidebar | 70% Right 3D Visualizer Workspace) */
 .dashboard-layout {
   display: grid;
-  grid-template-columns: minmax(300px, 25%) 1fr;
+  grid-template-columns: minmax(320px, 28%) 1fr;
   gap: 1.25rem;
   padding: 0.75rem 1.5rem;
   flex: 1;
