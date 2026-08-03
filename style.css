@@ -164,17 +164,21 @@ body {
 
 .label-with-badge {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.25rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
   width: 100%;
+  margin-bottom: 0.2rem;
 }
 
 .label-with-badge label {
   margin-bottom: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .inner-dim-badge {
+  display: inline-block;
   font-size: 0.68rem;
   font-weight: 700;
   color: var(--pudu-blue);
