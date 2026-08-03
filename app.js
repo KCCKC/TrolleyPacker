@@ -572,10 +572,10 @@ function loadPuduModel(chassisType, onLoaded) {
 
   const loader = new THREE.GLTFLoader();
 
-  // Primary URL (try 127.0.0.1 server if opening via file:// protocol)
+  // Handle URL encoding for filenames with spaces (e.g., T600 Underride.glb)
   const targetUrl = window.location.protocol === 'file:'
     ? `http://127.0.0.1:8000/${encodeURIComponent(file)}`
-    : file;
+    : encodeURI(file);
 
   loader.load(targetUrl, (gltf) => {
     puduModelCache[chassisType] = gltf.scene;
