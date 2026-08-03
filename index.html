@@ -110,16 +110,11 @@
         </div>
       </section>
 
-      <!-- Section 2: Cargo Manifest Input -->
+      <!-- Section 2: Product Input & Calculator -->
       <section class="card mt-3">
         <div class="card-header flex-between">
-          <h2>Product Manifest</h2>
-          <div class="manifest-header-actions">
-            <button id="btn-smart-fit" class="btn btn-xs btn-outline" title="Optimize trolley size for item dimensions">Auto-Fit</button>
-            <button id="btn-max-mix" class="btn btn-xs btn-secondary" title="Max fill trolley with optimal mix of listed products">Max Fill Mix</button>
-            <button id="btn-calculate" class="btn btn-xs btn-primary">Calculate</button>
-            <span class="badge-count" id="badge-manifest-count">0 Lines</span>
-          </div>
+          <h2>Product Manifest Input</h2>
+          <span class="badge-count" id="badge-manifest-count">0 Lines</span>
         </div>
         <div class="card-body">
           <form id="form-product-add" class="product-input-form">
@@ -127,25 +122,32 @@
               <label>Product Name</label>
               <input type="text" id="p-name" value="Product 1" required class="form-control">
             </div>
-            <div class="dim-grid-4 mt-2">
+
+            <!-- Row 1: Dimensions (L & W) -->
+            <div class="dim-grid-2 mt-2">
               <div class="form-group">
-                <label>L (mm)</label>
+                <label>Length L (mm)</label>
                 <input type="number" id="p-l" value="600" min="50" max="1200" required class="form-control">
               </div>
               <div class="form-group">
-                <label>W (mm)</label>
+                <label>Width W (mm)</label>
                 <input type="number" id="p-w" value="600" min="50" max="1200" required class="form-control">
               </div>
+            </div>
+
+            <!-- Row 2: Height & Weight (Never covered!) -->
+            <div class="dim-grid-2 mt-2">
               <div class="form-group">
-                <label>H (mm)</label>
+                <label>Height H (mm)</label>
                 <input type="number" id="p-h" value="300" min="50" max="1300" required class="form-control">
               </div>
               <div class="form-group">
-                <label>Wt (kg)</label>
+                <label>Weight (kg)</label>
                 <input type="number" id="p-wt" value="15" step="0.1" min="0.1" required class="form-control">
               </div>
             </div>
 
+            <!-- Row 3: Quantity & Max Qty Calc -->
             <div class="dim-grid-2 mt-2">
               <div class="form-group">
                 <label>Quantity</label>
@@ -160,8 +162,23 @@
             <button type="submit" class="btn btn-secondary btn-full mt-3">+ Add to Manifest</button>
           </form>
 
-          <!-- Table of Added Products -->
-          <div class="product-table-wrapper mt-3">
+          <!-- Optimization Action Buttons -->
+          <div class="manifest-action-grid mt-3">
+            <button id="btn-smart-fit" class="btn btn-xs btn-outline" title="Optimize trolley size for item dimensions">Auto-Fit Trolley</button>
+            <button id="btn-max-mix" class="btn btn-xs btn-secondary" title="Max fill trolley with optimal mix of listed products">Max Fill Mix</button>
+            <button id="btn-calculate" class="btn btn-xs btn-primary">Recalculate</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Extension Card — Manifested Products List -->
+      <section class="card mt-3">
+        <div class="card-header flex-between">
+          <h2>Manifested Products</h2>
+          <span class="text-muted text-xs">Edit / Remove Items</span>
+        </div>
+        <div class="card-body">
+          <div class="product-table-wrapper">
             <table class="data-table" id="table-products">
               <thead>
                 <tr>

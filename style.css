@@ -197,6 +197,12 @@ body {
   gap: 0.5rem;
 }
 
+.manifest-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
 /* Dimension Guide Reference Panel */
 .dim-guide-panel {
   margin-bottom: 0.75rem;
