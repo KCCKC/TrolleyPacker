@@ -1168,10 +1168,11 @@ function render3DScene() {
 
     const mesh = new THREE.Mesh(boxGeo, boxMat);
     const legCD = state.trolley.legCD || 40;
-    // Cargo Y starts at rack floor (G), X & Z offset by legCD to sit inside inner usable bounds A-2C x B-2C
+    const plateThickness = 8;
+    // Cargo Y starts on top of rack floor plate (G + plateThickness), X & Z offset by legCD to sit inside inner usable bounds A-2C x B-2C
     mesh.position.set(
       legCD + it.x + it.packedL / 2,
-      G + it.z + it.packedH / 2,
+      G + plateThickness + it.z + it.packedH / 2,
       legCD + it.y + it.packedW / 2
     );
 
