@@ -1064,14 +1064,62 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
   }
 
   // ============================================================
-  // 4. CARGO CAGE WIREFRAME (from Y = G to Y = G + H, BEHIND THE MAST)
+  // 4. 3D STRUCTURAL HOLLOW TUBE RACK FRAME (Thickness C/D = legW)
+  //    Solid 3D rectangular frame cage made of square tubes of thickness C
   // ============================================================
-  const cageGeo = new THREE.BoxGeometry(L, H, W);
-  const cageEdges = new THREE.EdgesGeometry(cageGeo);
-  const cageMat = new THREE.LineBasicMaterial({ color: 0x0052cc, linewidth: 2 });
-  const cage = new THREE.LineSegments(cageEdges, cageMat);
-  cage.position.set(L / 2, G + H / 2, W / 2);
-  group.add(cage);
+  const frameMat = new THREE.MeshStandardMaterial({
+    color: 0x0052cc,
+    roughness: 0.4,
+    metalness: 0.3
+  });
+  const edgeLineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75 });
+
+  const frameGroup = new THREE.Group();
+
+  // Helper function to build 3D square tube frame bars with white edge wireframe outlines
+  function addFrameBar(sizeX, sizeY, sizeZ, posX, posY, posZ) {
+    const barGeo = new THREE.BoxGeometry(sizeX, sizeY, sizeZ);
+    const barMesh = new THREE.Mesh(barGeo, frameMat);
+    barMesh.position.set(posX, posY, posZ);
+
+    const edges = new THREE.EdgesGeometry(barGeo);
+    const line = new THREE.LineSegments(edges, edgeLineMat);
+    barMesh.add(line);
+
+    frameGroup.add(barMesh);
+  }
+
+  // A. 4 Vertical Corner Columns extending from Y = G to Y = G + H (Thickness legW x legW)
+  const cornerPositions = [
+    { x: legW / 2,     z: legW / 2 },          // Front-Left
+    { x: L - legW / 2, z: legW / 2 },          // Front-Right
+    { x: legW / 2,     z: W - legW / 2 },      // Back-Left
+    { x: L - legW / 2, z: W - legW / 2 }       // Back-Right
+  ];
+
+  cornerPositions.forEach(pos => {
+    addFrameBar(legW, H, legW, pos.x, G + H / 2, pos.z);
+  });
+
+  // B. 4 Top Horizontal Frame Rails (at Y = G + H - legW / 2)
+  const topY = G + H - legW / 2;
+  // Front & Back X-rails
+  addFrameBar(L, legW, legW, L / 2, topY, legW / 2);
+  addFrameBar(L, legW, legW, L / 2, topY, W - legW / 2);
+  // Left & Right Z-rails
+  addFrameBar(legW, legW, Math.max(1, W - 2 * legW), legW / 2, topY, W / 2);
+  addFrameBar(legW, legW, Math.max(1, W - 2 * legW), L - legW / 2, topY, W / 2);
+
+  // C. 4 Bottom Horizontal Frame Rails (at Y = G + legW / 2)
+  const botY = G + legW / 2;
+  // Front & Back X-rails
+  addFrameBar(L, legW, legW, L / 2, botY, legW / 2);
+  addFrameBar(L, legW, legW, L / 2, botY, W - legW / 2);
+  // Left & Right Z-rails
+  addFrameBar(legW, legW, Math.max(1, W - 2 * legW), legW / 2, botY, W / 2);
+  addFrameBar(legW, legW, Math.max(1, W - 2 * legW), L - legW / 2, botY, W / 2);
+
+  group.add(frameGroup);
 
   // ============================================================
   // 5. GROUND GRID (Y = 0)
@@ -1158,6 +1206,7 @@ function render2DTopView() {
 
   const L = state.trolley.length;
   const W = state.trolley.width;
+  const legCD = state.trolley.legCD || 40;
   const paddingX = 60;
   const paddingY = 60;
 
@@ -1194,16 +1243,36 @@ function render2DTopView() {
   ctx.fillStyle = '#0052cc';
   ctx.fill();
 
-  // Trolley Platform Rectangle
+  // Outer Trolley Frame Rectangle (Full A x B)
   ctx.strokeStyle = '#0052cc';
   ctx.lineWidth = 3;
-  ctx.strokeRect(startX, startY, L * scale, W * scale);
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = 'rgba(71, 85, 105, 0.15)';
   ctx.fillRect(startX, startY, L * scale, W * scale);
   ctx.strokeRect(startX, startY, L * scale, W * scale);
 
+  // Inner Usable Area Rectangle ( (A - 2C) x (B - 2C) )
+  const innerX = startX + legCD * scale;
+  const innerY = startY + legCD * scale;
+  const innerW = (L - 2 * legCD) * scale;
+  const innerH = (W - 2 * legCD) * scale;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(innerX, innerY, Math.max(1, innerW), Math.max(1, innerH));
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+  ctx.strokeRect(innerX, innerY, Math.max(1, innerW), Math.max(1, innerH));
+  ctx.setLineDash([]); // Reset line dash
+
+  // 4 Solid Corner Leg Posts in Top View
+  const legS = legCD * scale;
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(startX, startY, legS, legS);
+  ctx.fillRect(startX + L * scale - legS, startY, legS, legS);
+  ctx.fillRect(startX, startY + W * scale - legS, legS, legS);
+  ctx.fillRect(startX + L * scale - legS, startY + W * scale - legS, legS, legS);
+
   // Render Placed Stock Items
-  const legCD = state.trolley.legCD || 40;
   const packedItems = state.packedResult.packedItems;
   packedItems.forEach(it => {
     if (it.z <= state.sliceHeight && it.z + it.packedH >= state.sliceHeight - 300) {
@@ -1245,6 +1314,7 @@ function render2DSideView() {
 
   const L = state.trolley.length;
   const H = state.trolley.height;
+  const legCD = state.trolley.legCD || 40;
   const paddingX = 60;
   const paddingY = 40;
 
@@ -1283,13 +1353,18 @@ function render2DSideView() {
   ctx.fillStyle = '#64748b';
   ctx.fillRect(neckX, startY - neckH, neckW, neckH);
 
-  // Trolley Container Box Profile (Z = 0 -> H)
+  // Trolley Outer Container Profile (Z = 0 -> H)
   ctx.strokeStyle = '#0052cc';
   ctx.lineWidth = 3;
   ctx.strokeRect(startX, startY - H * scale, L * scale, H * scale);
 
+  // Vertical Frame Side Bars (thickness legCD)
+  const legS = legCD * scale;
+  ctx.fillStyle = 'rgba(71, 85, 105, 0.3)';
+  ctx.fillRect(startX, startY - H * scale, legS, H * scale);
+  ctx.fillRect(startX + L * scale - legS, startY - H * scale, legS, H * scale);
+
   // Placed Stock Items
-  const legCD = state.trolley.legCD || 40;
   const packedItems = state.packedResult.packedItems;
   packedItems.forEach(it => {
     const ix = startX + (legCD + it.x) * scale;
