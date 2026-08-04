@@ -1110,15 +1110,6 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
   addFrameBar(legW, legW, Math.max(1, W - 2 * legW), legW / 2, topY, W / 2);
   addFrameBar(legW, legW, Math.max(1, W - 2 * legW), L - legW / 2, topY, W / 2);
 
-  // C. 4 Bottom Horizontal Frame Rails (at Y = G + legW / 2)
-  const botY = G + legW / 2;
-  // Front & Back X-rails
-  addFrameBar(L, legW, legW, L / 2, botY, legW / 2);
-  addFrameBar(L, legW, legW, L / 2, botY, W - legW / 2);
-  // Left & Right Z-rails
-  addFrameBar(legW, legW, Math.max(1, W - 2 * legW), legW / 2, botY, W / 2);
-  addFrameBar(legW, legW, Math.max(1, W - 2 * legW), L - legW / 2, botY, W / 2);
-
   group.add(frameGroup);
 
   // ============================================================
