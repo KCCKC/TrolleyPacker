@@ -892,7 +892,7 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
 
   // --- Materials ---
   const legMat    = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5, metalness: 0.3 });
-  const plateMat  = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.4, metalness: 0.2, transparent: true, opacity: 0.45 });
+  const plateMat  = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5, metalness: 0.3 });
   const casterMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6, metalness: 0.4 });
 
   // ============================================================
@@ -925,12 +925,18 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
   });
 
   // ============================================================
-  // 2. RACK BASE PLATE (thin plate extending downwards from Y = G - 8 to Y = G)
+  // 2. RACK BASE PLATE (Solid steel plate extending downwards from Y = G - 8 to Y = G)
   // ============================================================
   const plateThickness = 8;
   const plateGeo = new THREE.BoxGeometry(L, plateThickness, W);
   const plate = new THREE.Mesh(plateGeo, plateMat);
   plate.position.set(L / 2, G - plateThickness / 2, W / 2);
+
+  const plateEdges = new THREE.EdgesGeometry(plateGeo);
+  const plateEdgeMat = new THREE.LineBasicMaterial({ color: 0x94a3b8 });
+  const plateEdgeLine = new THREE.LineSegments(plateEdges, plateEdgeMat);
+  plate.add(plateEdgeLine);
+
   group.add(plate);
 
   // ============================================================
