@@ -925,12 +925,12 @@ function drawPuduChassisAndRack(group, L, W, H, trolleyState) {
   });
 
   // ============================================================
-  // 2. RACK BASE PLATE (thin plate at Y = G, the rack floor)
+  // 2. RACK BASE PLATE (thin plate extending downwards from Y = G - 8 to Y = G)
   // ============================================================
   const plateThickness = 8;
   const plateGeo = new THREE.BoxGeometry(L, plateThickness, W);
   const plate = new THREE.Mesh(plateGeo, plateMat);
-  plate.position.set(L / 2, G + plateThickness / 2, W / 2);
+  plate.position.set(L / 2, G - plateThickness / 2, W / 2);
   group.add(plate);
 
   // ============================================================
@@ -1168,11 +1168,10 @@ function render3DScene() {
 
     const mesh = new THREE.Mesh(boxGeo, boxMat);
     const legCD = state.trolley.legCD || 40;
-    const plateThickness = 8;
-    // Cargo Y starts on top of rack floor plate (G + plateThickness), X & Z offset by legCD to sit inside inner usable bounds A-2C x B-2C
+    // Cargo floor starts at Y = G (top surface of base plate), X & Z offset by legCD to sit inside inner usable bounds A-2C x B-2C
     mesh.position.set(
       legCD + it.x + it.packedL / 2,
-      G + plateThickness + it.z + it.packedH / 2,
+      G + it.z + it.packedH / 2,
       legCD + it.y + it.packedW / 2
     );
 
